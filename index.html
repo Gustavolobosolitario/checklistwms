@@ -129,6 +129,61 @@ textarea{min-height:72px;resize:vertical}
 
 .savehint{font-size:12px;color:var(--muted);margin-top:8px}
 .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(97,203,210,.16);color:var(--accent2);font-weight:800;font-size:12px}
+.company-validation{
+  margin:16px 0 4px;
+  padding:14px;
+  border:1px solid rgba(0,156,168,.14);
+  border-radius:18px;
+  background:linear-gradient(135deg,#ffffff,#f2fbfc);
+}
+.company-validation-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  margin-bottom:10px;
+}
+.company-validation-head strong{
+  color:var(--accent2);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.company-progress{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+.company-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:8px;
+}
+.company-chip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#ffffff;
+  color:var(--soft);
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+}
+.company-chip input{
+  width:17px;
+  height:17px;
+  accent-color:var(--accent2);
+}
+.company-chip.done{
+  border-color:rgba(0,156,168,.35);
+  background:rgba(97,203,210,.13);
+  color:var(--accent2);
+}
+
 
 .timeline-panel{margin:28px 0 10px;border:1px solid rgba(0,156,168,.16);background:rgba(255,255,255,.94);border-radius:28px;padding:24px;box-shadow:var(--shadow)}
 .timeline-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:18px}
@@ -273,11 +328,15 @@ const checklist = [
 { id:'6.4', module:'m6', titulo:'Segurança e Grupos de Usuários', caminho:'Administração / Segurança / Grupos de Usuários', objetivo:'Controlar permissões por responsabilidade operacional.', campos:'Grupo Operador\nGrupo Conferente\nGrupo Supervisor\nPermissões críticas', parametrizacao:'Usuários devem ser divididos em Grupos (Operador, Conferente, Supervisor). Somente supervisores podem autorizar "Liberar com Divergência" ou "Estornar Coleta".', impacto:'Permissões indevidas aumentam risco operacional, fiscal e de auditoria.', exemplo:'Operador: execução\nConferente: conferência\nSupervisor: liberações críticas e estornos' },
 { id:'6.5', module:'m6', titulo:'Monitoramento Operacional', caminho:'Monitoramento > Gestão de Atividades', objetivo:'Acompanhar o progresso das tarefas em tempo real no coletor.', campos:'Gestão de Atividades\nStatus das tarefas\nColetor de Dados', parametrizacao:'Utilizar a tela Monitoramento > Gestão de Atividades para acompanhar o progresso das tarefas em tempo real no coletor.', impacto:'Sem monitoramento, a gestão perde visibilidade de gargalos, produtividade e tarefas pendentes.', exemplo:'Acompanhar recebimento, armazenagem, separação, expedição e divergências em tempo real.' }
 ];
+const companies = ['Mais Armazém','GWM','PQ Silicas','Electrolux','Agroceres'];
 const storageKey = 'checklist_wms_armazem_geral_v1';
 let db = JSON.parse(localStorage.getItem(storageKey) || '{}');
 function save(){ localStorage.setItem(storageKey, JSON.stringify(db)); updateKPIs(); renderTimeline(); }
-function getState(id){ return db[id] || {done:false, obs:'', resp:'', date:'', start:'', end:''}; }
+function getState(id){ return db[id] || {done:false, obs:'', resp:'', date:'', start:'', end:'', companies:{}}; }
 function setField(id, field, value){ db[id] = {...getState(id), [field]: value}; save(); if(['start','end','date','done'].includes(field)) renderTimeline(); }
+function setCompany(id, company, checked){ const st=getState(id); db[id]={...st, companies:{...(st.companies||{}), [company]: checked}}; save(); render(); }
+function companyProgress(st){ const total=companies.length; const done=companies.filter(c=>st.companies && st.companies[c]).length; return {done,total,pct:total?Math.round(done/total*100):0}; }
+function renderCompanyValidation(id, st){ const p=companyProgress(st); const chips=companies.map(c=>{ const checked=!!(st.companies && st.companies[c]); return `<label class="company-chip ${checked?'done':''}"><input type="checkbox" ${checked?'checked':''} onchange="setCompany('${id}','${escapeAttr(c)}',this.checked)">${escapeHtml(c)}</label>`; }).join(''); return `<div class="company-validation"><div class="company-validation-head"><strong>Validação por empresa</strong><span class="company-progress">${p.done}/${p.total} preenchidas • ${p.pct}%</span></div><div class="company-grid">${chips}</div></div>`; }
 function moduleTitle(id){ return modules.find(m=>m.id===id)?.title || id; }
 function initFilters(){
   document.getElementById('moduleFilter').innerHTML = '<option value="">Todos os módulos</option>' + modules.map(m=>`<option value="${m.id}">${m.title}</option>`).join('');
@@ -313,6 +372,7 @@ function render(){
           <div class="box"><strong>Impacto de erro</strong><div>${escapeHtml(item.impacto)}</div></div>
           <div class="box"><strong>Exemplo / Validação</strong><div>${escapeHtml(item.exemplo)}</div></div>
         </div>
+        ${renderCompanyValidation(item.id, st)}
         <div class="notes">
           <textarea placeholder="Observações, evidências, pendências ou prints validados..." oninput="setField('${item.id}','obs',this.value)">${escapeHtml(st.obs||'')}</textarea>
           <div>
@@ -340,8 +400,8 @@ function updateKPIs(){
 }
 function csvCell(v){ return '"'+String(v??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"'; }
 function exportCSV(){
-  const header=['ID','Módulo','Item','Status','Responsável','Início','Fim','Data Conclusão','Objetivo','Caminho','Campos Obrigatórios','Parametrização','Impacto de Erro','Exemplo/Validação','Observação'];
-  const rows=checklist.map(i=>{const st=getState(i.id);return [i.id,moduleTitle(i.module),i.titulo,st.done?'Realizado':'Pendente',st.resp,st.start,st.end,st.date,i.objetivo,i.caminho,i.campos,i.parametrizacao,i.impacto,i.exemplo,st.obs].map(csvCell).join(';')});
+  const header=['ID','Módulo','Item','Status','Responsável','Início','Fim','Data Conclusão',...companies.map(c=>'Empresa - '+c),'Objetivo','Caminho','Campos Obrigatórios','Parametrização','Impacto de Erro','Exemplo/Validação','Observação'];
+  const rows=checklist.map(i=>{const st=getState(i.id);return [i.id,moduleTitle(i.module),i.titulo,st.done?'Realizado':'Pendente',st.resp,st.start,st.end,st.date,...companies.map(c=>(st.companies&&st.companies[c])?'Preenchido':'Pendente'),i.objetivo,i.caminho,i.campos,i.parametrizacao,i.impacto,i.exemplo,st.obs].map(csvCell).join(';')});
   download('checklist_wms_armazem_geral.csv',[header.map(csvCell).join(';'),...rows].join('\ufeff\n'),'text/csv;charset=utf-8;');
 }
 function exportJSON(){ download('backup_checklist_wms_armazem_geral.json',JSON.stringify(db,null,2),'application/json'); }
