@@ -284,7 +284,54 @@ textarea{min-height:72px;resize:vertical}
 .gantt-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;color:var(--muted);font-size:12px}
 .gantt-legend b{color:var(--accent2)}
 
+/* ================= PAINEL EXECUTIVO ================= */
+.executive-panel{
+  margin:26px 0 22px;
+  border:1px solid rgba(0,156,168,.16);
+  background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(238,247,249,.96));
+  border-radius:30px;
+  padding:24px;
+  box-shadow:var(--shadow);
+}
+.executive-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:18px}
+.executive-head h3{font-size:26px;margin:4px 0 0}
+.executive-head p{margin:6px 0 0;color:var(--muted);line-height:1.5;max-width:860px}
+.exec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:16px 0}
+.exec-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:17px;position:relative;overflow:hidden}
+.exec-card b{font-size:31px;display:block}
+.exec-card span{display:block;color:var(--muted);font-size:13px;margin-top:4px;line-height:1.35}
+.exec-card small{display:inline-block;margin-top:10px;font-weight:900;color:var(--accent2);background:rgba(97,203,210,.15);padding:6px 9px;border-radius:999px}
+.exec-card.risk small{color:#b63a45;background:rgba(239,107,115,.12)}
+.exec-card.warn small{color:#9a6b00;background:rgba(241,187,71,.18)}
+.indicator-layout{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:start;margin-top:16px}
+.chart-card,.indicator-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px}
+.chart-card h4,.indicator-card h4{margin:0 0 6px;font-size:18px}
+.chart-card p,.indicator-card p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.5}
+.bar-row{display:grid;grid-template-columns:170px 1fr 54px;gap:10px;align-items:center;margin:11px 0}
+.bar-label{font-size:13px;font-weight:900;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:14px;background:#e7f6f8;border-radius:999px;border:1px solid var(--line);overflow:hidden}
+.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.35s}
+.bar-value{text-align:right;font-weight:900;color:var(--accent2);font-size:13px}
+.indicator-list{display:grid;gap:10px}
+.indicator-mini{border:1px solid rgba(0,156,168,.14);background:linear-gradient(135deg,#fff,#f8fcfd);border-radius:18px;padding:13px}
+.indicator-mini-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+.indicator-mini strong{font-size:14px;color:var(--text)}
+.indicator-mini .score{font-size:18px;font-weight:950;color:var(--accent2)}
+.indicator-mini .needed{font-size:12px;color:var(--muted);line-height:1.45;margin-top:8px}
+.indicator-mini .missing{font-size:12px;color:#b63a45;line-height:1.45;margin-top:6px}
+.data-quality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.data-quality-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
+.data-quality-item b{font-size:20px;color:var(--accent2)}
+.data-quality-item span{display:block;color:var(--muted);font-size:12px;margin-top:3px;line-height:1.35}
+.quality-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:900;border-radius:999px;padding:7px 10px;background:rgba(97,203,210,.16);color:var(--accent2)}
+.quality-badge.warn{background:rgba(241,187,71,.18);color:#9a6b00}
+.quality-badge.risk{background:rgba(239,107,115,.12);color:#b63a45}
+.btn.small{padding:8px 10px;border-radius:11px;font-size:12px}
+
 @media(max-width:1200px){
+  .exec-grid{grid-template-columns:repeat(2,1fr)}
+  .indicator-layout{grid-template-columns:1fr}
+  .data-quality-grid{grid-template-columns:repeat(2,1fr)}
   .notes{
     grid-template-columns:1fr;
   }
@@ -297,7 +344,7 @@ textarea{min-height:72px;resize:vertical}
 @media(max-width:1000px){
   .app{grid-template-columns:1fr}
   .sidebar{position:relative;height:auto}
-  .filters,.kpis,.details,.item-top{grid-template-columns:1fr}
+  .filters,.kpis,.details,.item-top,.exec-grid,.data-quality-grid{grid-template-columns:1fr}
   .notes{grid-template-columns:1fr}
   .date-grid{grid-template-columns:1fr}
   .main{padding:22px}
@@ -337,6 +384,44 @@ textarea{min-height:72px;resize:vertical}
         <button class="btn danger" onclick="resetAll()">Limpar banco local</button>
       </div>
     </section>
+
+    <section class="executive-panel" id="executivePanel">
+      <div class="executive-head">
+        <div>
+          <span class="eyebrow">Painel Executivo</span>
+          <h3>Indicadores de eficiência da implantação WMS</h3>
+          <p>Os indicadores abaixo são atualizados automaticamente conforme os itens do checklist são preenchidos, concluídos, validados e recebem evidências. A eficiência considera a qualidade dos dados preenchidos e aponta quando ainda falta informação para o indicador ser confiável.</p>
+        </div>
+        <span class="quality-badge" id="execQualityBadge">Aguardando dados</span>
+      </div>
+
+      <div class="exec-grid">
+        <div class="exec-card" id="cardGoLive"><b id="execGoLive">0%</b><span>Prontidão para Go Live</span><small id="goLiveStatus">Aguardando execução</small></div>
+        <div class="exec-card" id="cardEvidence"><b id="execEvidence">0%</b><span>Qualidade das evidências</span><small id="evidenceStatus">Sem prints anexados</small></div>
+        <div class="exec-card" id="cardGovernance"><b id="execGovernance">0%</b><span>Índice de governança</span><small id="governanceStatus">Dados incompletos</small></div>
+        <div class="exec-card" id="cardData"><b id="execDataEfficiency">0%</b><span>Eficiência dos dados preenchidos</span><small id="dataStatus">Necessita preenchimento</small></div>
+      </div>
+
+      <div class="indicator-layout">
+        <div class="chart-card">
+          <h4>Eficiência por módulo do checklist</h4>
+          <p>Considera status realizado, evidência anexada, responsável, datas, validação e empresas preenchidas.</p>
+          <div id="moduleEfficiencyChart"></div>
+        </div>
+        <div class="indicator-card">
+          <h4>Indicadores operacionais habilitados</h4>
+          <p>Mostra se o checklist já possui dados suficientes para medir cada indicador com confiança.</p>
+          <div class="indicator-list" id="operationalIndicators"></div>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-top:16px">
+        <h4>Qualidade dos dados necessários</h4>
+        <p>Esses dados sustentam os indicadores. Quando algum campo estiver baixo, o indicador pode aparecer, mas com baixa confiabilidade.</p>
+        <div class="data-quality-grid" id="dataQualityGrid"></div>
+      </div>
+    </section>
+
 
     <section class="filters">
       <input class="input" id="search" placeholder="Pesquisar por tela, caminho, objetivo, parametrização..." oninput="render()">
@@ -401,9 +486,9 @@ const checklist = [
 const companies = ['Mais Armazém','GWM','PQ Silicas','Electrolux','Agroceres'];
 const storageKey = 'checklist_wms_armazem_geral_v1';
 let db = JSON.parse(localStorage.getItem(storageKey) || '{}');
-function save(){ localStorage.setItem(storageKey, JSON.stringify(db)); updateKPIs(); renderTimeline(); }
-function getState(id){ return db[id] || {done:false, obs:'', resp:'', date:'', start:'', end:'', companies:{}, evidence:null}; }
-function setField(id, field, value){ db[id] = {...getState(id), [field]: value}; save(); if(['start','end','date','done'].includes(field)) renderTimeline(); }
+function save(){ localStorage.setItem(storageKey, JSON.stringify(db)); updateKPIs(); updateExecutivePanel(); renderTimeline(); }
+function getState(id){ return db[id] || {done:false, obs:'', resp:'', date:'', start:'', end:'', validator:'', validationDate:'', criticality:'', evidenceType:'', companies:{}, evidence:null}; }
+function setField(id, field, value){ db[id] = {...getState(id), [field]: value}; save(); if(['start','end','date','done','validationDate','validator','criticality','evidenceType'].includes(field)) renderTimeline(); }
 function setCompany(id, company, checked){ const st=getState(id); db[id]={...st, companies:{...(st.companies||{}), [company]: checked}}; save(); render(); }
 function companyProgress(st){ const total=companies.length; const done=companies.filter(c=>st.companies && st.companies[c]).length; return {done,total,pct:total?Math.round(done/total*100):0}; }
 function renderCompanyValidation(id, st){ const p=companyProgress(st); const chips=companies.map(c=>{ const checked=!!(st.companies && st.companies[c]); return `<label class="company-chip ${checked?'done':''}"><input type="checkbox" ${checked?'checked':''} onchange="setCompany('${id}','${escapeAttr(c)}',this.checked)">${escapeHtml(c)}</label>`; }).join(''); return `<div class="company-validation"><div class="company-validation-head"><strong>Validação por empresa</strong><span class="company-progress">${p.done}/${p.total} preenchidas • ${p.pct}%</span></div><div class="company-grid">${chips}</div></div>`; }
@@ -517,9 +602,29 @@ function render(){
               <label>Início<input class="input" type="date" value="${escapeAttr(st.start||'')}" onchange="setField('${item.id}','start',this.value)"></label>
               <label>Fim<input class="input" type="date" value="${escapeAttr(st.end||st.date||'')}" onchange="setField('${item.id}','end',this.value)"></label>
             </div>
-            <input class="input" placeholder="Responsável" value="${escapeAttr(st.resp||'')}" oninput="setField('${item.id}','resp',this.value)">
+            <input class="input" placeholder="Responsável pela execução" value="${escapeAttr(st.resp||'')}" oninput="setField('${item.id}','resp',this.value)">
             <input class="input" style="margin-top:10px" type="date" title="Data de conclusão" value="${escapeAttr(st.date||'')}" onchange="setField('${item.id}','date',this.value)">
-            <div class="savehint">Salvo automaticamente</div>
+            <div class="date-grid" style="margin-top:10px">
+              <label>Validador<input class="input" placeholder="Quem validou" value="${escapeAttr(st.validator||'')}" oninput="setField('${item.id}','validator',this.value)"></label>
+              <label>Data validação<input class="input" type="date" value="${escapeAttr(st.validationDate||'')}" onchange="setField('${item.id}','validationDate',this.value)"></label>
+            </div>
+            <div class="date-grid" style="margin-top:10px">
+              <label>Criticidade<select class="select" onchange="setField('${item.id}','criticality',this.value)">
+                <option value="" ${!st.criticality?'selected':''}>Selecionar</option>
+                <option value="Baixa" ${st.criticality==='Baixa'?'selected':''}>Baixa</option>
+                <option value="Média" ${st.criticality==='Média'?'selected':''}>Média</option>
+                <option value="Alta" ${st.criticality==='Alta'?'selected':''}>Alta</option>
+                <option value="Crítica" ${st.criticality==='Crítica'?'selected':''}>Crítica</option>
+              </select></label>
+              <label>Tipo evidência<select class="select" onchange="setField('${item.id}','evidenceType',this.value)">
+                <option value="" ${!st.evidenceType?'selected':''}>Selecionar</option>
+                <option value="Print" ${st.evidenceType==='Print'?'selected':''}>Print</option>
+                <option value="Vídeo" ${st.evidenceType==='Vídeo'?'selected':''}>Vídeo</option>
+                <option value="Documento" ${st.evidenceType==='Documento'?'selected':''}>Documento</option>
+                <option value="Teste executado" ${st.evidenceType==='Teste executado'?'selected':''}>Teste executado</option>
+              </select></label>
+            </div>
+            <div class="savehint">Salvo automaticamente • Esses campos alimentam o Painel Executivo</div>
           </div>
         </div>
         ${renderEvidence(item.id, st)}
@@ -529,8 +634,149 @@ function render(){
   });
   document.getElementById('content').innerHTML = html || '<div class="item">Nenhum item encontrado para os filtros aplicados.</div>';
   updateKPIs();
+  updateExecutivePanel();
   renderTimeline();
 }
+
+function clamp(n){ return Math.max(0, Math.min(100, Math.round(n || 0))); }
+function hasEvidence(st){ return !!(st.evidence && st.evidence.data); }
+function hasCompanies(st){ const p=companyProgress(st); return p.done>0; }
+function itemDataScore(item){
+  const st=getState(item.id);
+  const p=companyProgress(st);
+  let score=0;
+  if(st.done) score+=25;
+  if(st.resp) score+=10;
+  if(st.start) score+=8;
+  if(st.end || st.date) score+=8;
+  if(hasEvidence(st)) score+=16;
+  if(st.validator) score+=10;
+  if(st.validationDate) score+=10;
+  if(st.criticality) score+=5;
+  if(st.evidenceType) score+=3;
+  score+=Math.round((p.pct||0)*0.05);
+  return clamp(score);
+}
+function moduleEfficiency(moduleId){
+  const items=checklist.filter(i=>i.module===moduleId);
+  if(!items.length) return 0;
+  return clamp(items.reduce((acc,i)=>acc+itemDataScore(i),0)/items.length);
+}
+function setCardState(cardId, pct){
+  const el=document.getElementById(cardId);
+  if(!el) return;
+  el.classList.remove('risk','warn');
+  if(pct<60) el.classList.add('risk');
+  else if(pct<85) el.classList.add('warn');
+}
+function badgeText(pct){
+  if(pct>=96) return 'Pronto para Go Live';
+  if(pct>=85) return 'Controlado';
+  if(pct>=60) return 'Atenção';
+  return 'Alto risco';
+}
+function badgeClass(pct){ return pct<60?'risk':(pct<85?'warn':''); }
+function completionPct(items){
+  if(!items.length) return 0;
+  return clamp(items.filter(i=>getState(i.id).done).length/items.length*100);
+}
+function evidencePct(items){
+  const doneItems=items.filter(i=>getState(i.id).done);
+  if(!doneItems.length) return 0;
+  return clamp(doneItems.filter(i=>hasEvidence(getState(i.id))).length/doneItems.length*100);
+}
+function fieldCoverage(fieldTest){
+  if(!checklist.length) return 0;
+  return clamp(checklist.filter(i=>fieldTest(getState(i.id), i)).length/checklist.length*100);
+}
+function processItems(keywords){
+  return checklist.filter(i=>{
+    const txt=(i.titulo+' '+i.caminho+' '+i.objetivo+' '+i.campos+' '+i.parametrizacao).toLowerCase();
+    return keywords.some(k=>txt.includes(k.toLowerCase()));
+  });
+}
+function indicatorScore(items){
+  if(!items.length) return 0;
+  return clamp(items.reduce((acc,i)=>acc+itemDataScore(i),0)/items.length);
+}
+function missingFor(items){
+  if(!items.length) return ['Itens do checklist relacionados ao processo'];
+  const checks=[
+    ['status realizado', st=>st.done],
+    ['responsável', st=>!!st.resp],
+    ['datas de início/fim', st=>!!st.start && !!(st.end||st.date)],
+    ['evidência/print', st=>hasEvidence(st)],
+    ['validador e data de validação', st=>!!st.validator && !!st.validationDate],
+    ['criticidade', st=>!!st.criticality]
+  ];
+  return checks.filter(([label,fn])=>items.some(i=>!fn(getState(i.id)))).map(([label])=>label);
+}
+function renderBars(targetId, rows){
+  const el=document.getElementById(targetId); if(!el) return;
+  if(!rows.length){ el.innerHTML='<p class="savehint">Sem dados para exibir.</p>'; return; }
+  el.innerHTML=rows.map(r=>`<div class="bar-row"><div class="bar-label" title="${escapeAttr(r.label)}">${escapeHtml(r.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${clamp(r.value)}%"></div></div><div class="bar-value">${clamp(r.value)}%</div></div>`).join('');
+}
+function updateExecutivePanel(){
+  if(!document.getElementById('executivePanel')) return;
+  const total=checklist.length;
+  const done=checklist.filter(i=>getState(i.id).done).length;
+  const goLive=total?clamp(done/total*100):0;
+  const ev=evidencePct(checklist);
+  const dataEff=total?clamp(checklist.reduce((acc,i)=>acc+itemDataScore(i),0)/total):0;
+  const governance=clamp((fieldCoverage(st=>!!st.resp)*0.15)+(fieldCoverage(st=>!!(st.start && (st.end||st.date)))*0.15)+(fieldCoverage(st=>hasEvidence(st))*0.20)+(fieldCoverage(st=>!!(st.validator && st.validationDate))*0.20)+(fieldCoverage(st=>!!st.obs)*0.10)+(fieldCoverage(st=>!!st.criticality)*0.10)+(goLive*0.10));
+
+  document.getElementById('execGoLive').textContent=goLive+'%';
+  document.getElementById('execEvidence').textContent=ev+'%';
+  document.getElementById('execGovernance').textContent=governance+'%';
+  document.getElementById('execDataEfficiency').textContent=dataEff+'%';
+  document.getElementById('goLiveStatus').textContent=badgeText(goLive);
+  document.getElementById('evidenceStatus').textContent= ev>=85?'Evidências consistentes': ev>=60?'Melhorar cobertura':'Faltam evidências';
+  document.getElementById('governanceStatus').textContent=badgeText(governance);
+  document.getElementById('dataStatus').textContent=badgeText(dataEff);
+  setCardState('cardGoLive',goLive); setCardState('cardEvidence',ev); setCardState('cardGovernance',governance); setCardState('cardData',dataEff);
+
+  const badge=document.getElementById('execQualityBadge');
+  badge.textContent='Confiabilidade geral: '+dataEff+'% • '+badgeText(dataEff);
+  badge.className='quality-badge '+badgeClass(dataEff);
+
+  renderBars('moduleEfficiencyChart', modules.map(m=>({label:m.title.replace(/^MÓDULO \d+:\s*/,'').replace('CHECKLIST TÉCNICO DE VALIDAÇÃO FINAL','VALIDAÇÃO FINAL'), value:moduleEfficiency(m.id)})));
+
+  const indicators=[
+    {name:'Recebimento', formula:'Status + XML/NF + evidência + validação', needed:'XML/NF, OR, cobertura fiscal, responsável, data, print e validação.', keys:['recebimento','entrada','ordem de recebimento','or','xml']},
+    {name:'Put Away / Endereçamento', formula:'Endereço + bipagem + evidência + validação', needed:'Endereço, setor/região, alocação, empresa, operador, print e validação.', keys:['put away','endereçamento','armazenagem','alocação','locais de armazenagem']},
+    {name:'Picking / Separação', formula:'Separação correta ÷ separações totais', needed:'Pedido, regra de saída, operador, conferente, status, evidência e data.', keys:['picking','separação','onda','packing','checkout']},
+    {name:'Expedição', formula:'Pedido carregado e validado ÷ pedidos totais', needed:'Pedido, NF de saída, CFOP, checklist de carregamento, evidência e validação.', keys:['expedição','saída','carregamento','cfop']},
+    {name:'Fiscal / Armazém Geral', formula:'Configurações fiscais concluídas ÷ necessárias', needed:'Regime, entidade, CFOP, NF-e, certificado, cobertura fiscal e evidência.', keys:['cfop','fiscal','nf-e','cobertura fiscal','regime']},
+    {name:'Cadastros Mestres', formula:'Cadastros completos ÷ cadastros necessários', needed:'Depositante, produto, embalagem, paletização, endereços, turnos e perfis.', keys:['depositante','produto','embalagem','paletização','cadastro']}
+  ];
+  const list=document.getElementById('operationalIndicators');
+  if(list){
+    list.innerHTML=indicators.map(ind=>{
+      const items=processItems(ind.keys);
+      const score=indicatorScore(items);
+      const missing=missingFor(items);
+      const cls=badgeClass(score);
+      return `<div class="indicator-mini"><div class="indicator-mini-top"><strong>${escapeHtml(ind.name)}</strong><span class="score">${score}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${score}%"></div></div><div class="needed"><b>Fórmula:</b> ${escapeHtml(ind.formula)}<br><b>Dados necessários:</b> ${escapeHtml(ind.needed)}</div>${missing.length?`<div class="missing"><b>Para melhorar a eficiência:</b> preencher ${escapeHtml(missing.join(', '))}.</div>`:`<div class="needed"><b>Situação:</b> indicador com dados suficientes para acompanhamento executivo.</div>`}</div>`;
+    }).join('');
+  }
+
+  const dataRows=[
+    ['Status realizado', goLive],
+    ['Responsável preenchido', fieldCoverage(st=>!!st.resp)],
+    ['Datas preenchidas', fieldCoverage(st=>!!(st.start && (st.end||st.date)))],
+    ['Evidência anexada', fieldCoverage(st=>hasEvidence(st))],
+    ['Validação preenchida', fieldCoverage(st=>!!(st.validator && st.validationDate))],
+    ['Criticidade definida', fieldCoverage(st=>!!st.criticality)],
+    ['Observação registrada', fieldCoverage(st=>!!st.obs)],
+    ['Empresa validada', fieldCoverage(st=>hasCompanies(st))],
+    ['Tipo de evidência', fieldCoverage(st=>!!st.evidenceType)]
+  ];
+  const grid=document.getElementById('dataQualityGrid');
+  if(grid){
+    grid.innerHTML=dataRows.map(([label,value])=>`<div class="data-quality-item"><b>${clamp(value)}%</b><span>${escapeHtml(label)}</span><div class="bar-track" style="margin-top:9px"><div class="bar-fill" style="width:${clamp(value)}%"></div></div></div>`).join('');
+  }
+}
+
 function updateKPIs(){
   const total=checklist.length, done=checklist.filter(i=>getState(i.id).done).length, pending=total-done, pct=total?Math.round(done/total*100):0;
   document.getElementById('kpiTotal').textContent=total; document.getElementById('kpiDone').textContent=done; document.getElementById('kpiPending').textContent=pending; document.getElementById('kpiPercent').textContent=pct+'%';
@@ -538,8 +784,8 @@ function updateKPIs(){
 }
 function csvCell(v){ return '"'+String(v??'').replace(/"/g,'""').replace(/\n/g,' | ')+'"'; }
 function exportCSV(){
-  const header=['ID','Módulo','Item','Status','Responsável','Início','Fim','Data Conclusão','Evidência Anexada','Nome da Evidência','Data da Evidência',...companies.map(c=>'Empresa - '+c),'Objetivo','Caminho','Campos Obrigatórios','Parametrização','Impacto de Erro','Exemplo/Validação','Observação'];
-  const rows=checklist.map(i=>{const st=getState(i.id);return [i.id,moduleTitle(i.module),i.titulo,st.done?'Realizado':'Pendente',st.resp,st.start,st.end,st.date,(st.evidence&&st.evidence.data)?'Sim':'Não',st.evidence?.name||'',st.evidence?.createdAt?new Date(st.evidence.createdAt).toLocaleString('pt-BR'):'',...companies.map(c=>(st.companies&&st.companies[c])?'Preenchido':'Pendente'),i.objetivo,i.caminho,i.campos,i.parametrizacao,i.impacto,i.exemplo,st.obs].map(csvCell).join(';')});
+  const header=['ID','Módulo','Item','Status','Responsável','Início','Fim','Data Conclusão','Validador','Data Validação','Criticidade','Tipo Evidência','Evidência Anexada','Nome da Evidência','Data da Evidência','Eficiência do Item %',...companies.map(c=>'Empresa - '+c),'Objetivo','Caminho','Campos Obrigatórios','Parametrização','Impacto de Erro','Exemplo/Validação','Observação'];
+  const rows=checklist.map(i=>{const st=getState(i.id);return [i.id,moduleTitle(i.module),i.titulo,st.done?'Realizado':'Pendente',st.resp,st.start,st.end,st.date,st.validator,st.validationDate,st.criticality,st.evidenceType,(st.evidence&&st.evidence.data)?'Sim':'Não',st.evidence?.name||'',st.evidence?.createdAt?new Date(st.evidence.createdAt).toLocaleString('pt-BR'):'',itemDataScore(i),...companies.map(c=>(st.companies&&st.companies[c])?'Preenchido':'Pendente'),i.objetivo,i.caminho,i.campos,i.parametrizacao,i.impacto,i.exemplo,st.obs].map(csvCell).join(';')});
   download('checklist_wms_armazem_geral.csv',[header.map(csvCell).join(';'),...rows].join('\ufeff\n'),'text/csv;charset=utf-8;');
 }
 function exportJSON(){ download('backup_checklist_wms_armazem_geral.json',JSON.stringify(db,null,2),'application/json'); }
